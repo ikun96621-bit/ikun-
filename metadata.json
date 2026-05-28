@@ -1,0 +1,6 @@
+{
+  "name": "ikun刷题",
+  "description": "一款深受Kuner喜爱的刷题软件，支持自定义模拟考试（涵盖单选、多选、判断）、错题本自动管理，并集成了AI一键智能题目解析。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
