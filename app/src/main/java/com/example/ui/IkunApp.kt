@@ -19,6 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -244,6 +246,213 @@ fun DashboardScreen(viewModel: IkunViewModel) {
             }
         }
 
+        // --- Daily Goal Card ---
+        item {
+            val dailyCompleted = viewModel.dailyCompletedCount
+            val dailyTarget = viewModel.dailyGoalTarget
+            val progressPercent = if (dailyTarget > 0) (dailyCompleted.toFloat() / dailyTarget).coerceIn(0f, 1f) else 0f
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "🎯 每日学习目标",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, KunerOrange.copy(alpha = 0.15f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "今天已完成 $dailyCompleted / $dailyTarget 题",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = if (dailyCompleted >= dailyTarget) "🎉 今日目标已达成！太强了！" else "坚持就是胜利，拿出最强状态！",
+                                fontSize = 11.sp,
+                                color = if (dailyCompleted >= dailyTarget) Color(0xFF2ECC71) else Color.Gray,
+                                fontWeight = if (dailyCompleted >= dailyTarget) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                        
+                        // Small inline target adjuster
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            IconButton(
+                                onClick = { 
+                                    if (dailyTarget > 5) {
+                                        viewModel.saveDailyGoalTarget(dailyTarget - 5)
+                                    } else if (dailyTarget > 1) {
+                                        viewModel.saveDailyGoalTarget(dailyTarget - 1)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .background(KunerGrey.copy(alpha = 0.15f), CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Remove,
+                                    contentDescription = "减少目标",
+                                    tint = KunerCharcoal,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                            
+                            Text(
+                                text = "$dailyTarget",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = KunerOrange,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                            
+                            IconButton(
+                                onClick = { 
+                                    viewModel.saveDailyGoalTarget(dailyTarget + 5)
+                                },
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .background(KunerOrangeLight, CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "增加目标",
+                                    tint = KunerOrange,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Linear Progress Indicator with rounded corners
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(KunerGrey.copy(alpha = 0.2f))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(progressPercent)
+                                .clip(RoundedCornerShape(5.dp))
+                                .background(KunerOrange)
+                        )
+                    }
+                    
+                    // Selectable fast presets for daily goals
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "快速设置:",
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
+                        val presets = listOf(5, 10, 20, 50)
+                        presets.forEach { targetVal ->
+                            val isSelected = dailyTarget == targetVal
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (isSelected) KunerOrange else KunerGrey.copy(alpha = 0.15f))
+                                    .clickable { viewModel.saveDailyGoalTarget(targetVal) }
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "$targetVal 题",
+                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Random Practice Banner/Card ---
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.startRandomPractice() },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = KunerOrange),
+                border = BorderStroke(1.dp, KunerOrange.copy(alpha = 0.3f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.25f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Shuffle,
+                            contentDescription = "随机刷题",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "🎲 随机全能刷题 (冲刺特训)",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "无需选择科目，打破门类壁垒，随机自动抽取题库中的所有试题进行完全随机乱序练习！",
+                            fontSize = 12.sp,
+                            color = Color.White.copy(alpha = 0.9f),
+                            lineHeight = 16.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "开始",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        }
+
         // Category title
         item {
             Text(
@@ -279,6 +488,7 @@ fun DashboardScreen(viewModel: IkunViewModel) {
                             imageVector = when (category.iconName) {
                                 "sports_basketball" -> Icons.Default.SportsBasketball
                                 "code" -> Icons.Default.Code
+                                "shuffle" -> Icons.Default.Shuffle
                                 else -> Icons.Default.Psychology
                             },
                             contentDescription = "Category Icon",
@@ -613,6 +823,8 @@ fun PracticeScreen(viewModel: IkunViewModel) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MockExamSetupScreen(viewModel: IkunViewModel) {
+    val totalScheduled = viewModel.examSingleCount + viewModel.examMultiCount + viewModel.examTfCount
+
     Card(
         modifier = Modifier
             .fillMaxSize()
@@ -634,7 +846,7 @@ fun MockExamSetupScreen(viewModel: IkunViewModel) {
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "自定义调节题型、题量和时间，全方位模拟真实竞技考场。",
+                    text = "自定义调节各题型考题数量和计时限制，全方位模拟真实竞技考场。",
                     fontSize = 12.sp,
                     color = Color.Gray
                 )
@@ -642,109 +854,174 @@ fun MockExamSetupScreen(viewModel: IkunViewModel) {
                 Divider()
             }
 
-            // 1. Question Type Selection
+            // 1. Exam Duration Custom Selection
             item {
-                Text("1. 选择考题类型 (多选)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text("1. 设定考试时限 (分钟)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(8.dp))
+                
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = viewModel.examTypeSingle,
-                            onCheckedChange = { viewModel.examTypeSingle = it },
-                            colors = CheckboxDefaults.colors(checkedColor = KunerOrange)
+                    Icon(
+                        imageVector = Icons.Default.Timer,
+                        contentDescription = "Time Input",
+                        tint = KunerOrange,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    
+                    OutlinedTextField(
+                        value = viewModel.examTimeMinutesInput,
+                        onValueChange = { newVal ->
+                            if (newVal.isEmpty() || newVal.all { it.isDigit() }) {
+                                viewModel.examTimeMinutesInput = newVal
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        label = { Text("自定义考试时长 (分钟)") },
+                        placeholder = { Text("例如 10") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = KunerOrange,
+                            unfocusedBorderColor = KunerGrey.copy(alpha = 0.5f),
+                            focusedLabelColor = KunerOrange
                         )
-                        Text("单选", fontSize = 13.sp)
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = viewModel.examTypeMulti,
-                            onCheckedChange = { viewModel.examTypeMulti = it },
-                            colors = CheckboxDefaults.colors(checkedColor = KunerOrange)
-                        )
-                        Text("多选", fontSize = 13.sp)
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = viewModel.examTypeTf,
-                            onCheckedChange = { viewModel.examTypeTf = it },
-                            colors = CheckboxDefaults.colors(checkedColor = KunerOrange)
-                        )
-                        Text("判断", fontSize = 13.sp)
-                    }
+                    )
                 }
-                if (!viewModel.examTypeSingle && !viewModel.examTypeMulti && !viewModel.examTypeTf) {
-                    Text("⚠️ 至少选择一种题型才可以开启考试哦！", color = Color(0xFFC0392B), fontSize = 11.sp)
-                }
-            }
 
-            // 2. Question Count Selector
-            item {
-                Text("2. 设置本场考题数量", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // Fast Presets Chips
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val countOptions = listOf(3, 5, 10, 15, 20)
-                    countOptions.forEach { count ->
-                        val isSelected = viewModel.examQuestionCount == count
+                    val timePresets = listOf(5, 10, 20, 30, 60)
+                    timePresets.forEach { mins ->
+                        val isSelected = viewModel.examTimeMinutesInput == mins.toString()
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(38.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .height(32.dp)
+                                .clip(RoundedCornerShape(6.dp))
                                 .background(if (isSelected) KunerOrange else KunerGrey.copy(alpha = 0.2f))
-                                .clickable { viewModel.examQuestionCount = count },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "$count 题",
-                                color = if (isSelected) Color.White else Color.Black,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
-                }
-            }
-
-            // 3. Exam Duration Selector
-            item {
-                Text("3. 设定考试时限 (分钟)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val timeOptions = listOf(1, 5, 10, 15, 30)
-                    timeOptions.forEach { mins ->
-                        val isSelected = viewModel.examTimeMinutes == mins
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(38.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) KunerOrange else KunerGrey.copy(alpha = 0.2f))
-                                .clickable { viewModel.examTimeMinutes = mins },
+                                .clickable { viewModel.examTimeMinutesInput = mins.toString() },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "$mins 分",
-                                color = if (isSelected) Color.White else Color.Black,
+                                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
+                                fontSize = 11.sp
                             )
                         }
                     }
                 }
             }
 
-            // Warnings & Launch Button
+            // 2. Separate Question Pickers
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Text("2. 设置各题型考题数量 (手动增减或输入)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            // Single Count
+            item {
+                QuestionCountPicker(
+                    title = "单选题数量",
+                    subtitle = "经典单项选择题考场演练",
+                    value = viewModel.examSingleCountInput,
+                    onValueChange = { viewModel.examSingleCountInput = it },
+                    icon = {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(KunerOrangeLight, RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Filter1, contentDescription = "Single", tint = KunerOrange)
+                        }
+                    }
+                )
+            }
+
+            // Multi Count
+            item {
+                QuestionCountPicker(
+                    title = "多选题数量",
+                    subtitle = "高难度多项选择挑战 (警告：多选)",
+                    value = viewModel.examMultiCountInput,
+                    onValueChange = { viewModel.examMultiCountInput = it },
+                    icon = {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(Color(0xFFE8F2FE), RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Filter9Plus, contentDescription = "Multi", tint = Color(0xFF2196F3))
+                        }
+                    }
+                )
+            }
+
+            // TF Count
+            item {
+                QuestionCountPicker(
+                    title = "判断题数量",
+                    subtitle = "精准是非对错火眼金睛判断",
+                    value = viewModel.examTfCountInput,
+                    onValueChange = { viewModel.examTfCountInput = it },
+                    icon = {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(Color(0xFFE8F8F5), RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Check, contentDescription = "TF", tint = Color(0xFF2ECC71))
+                        }
+                    }
+                )
+            }
+
+            // Summary Indicator & Warnings & Launch Button
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider()
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "本场考试预计安排题量: ",
+                        fontSize = 13.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = "$totalScheduled 题",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (totalScheduled > 0) KunerOrange else Color.Gray
+                    )
+                }
+
+                if (totalScheduled == 0) {
+                    Text(
+                        text = "⚠️ 至少需要安插 1 道以上考题才可以启动机考哦！",
+                        color = Color(0xFFC0392B),
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                
                 Button(
                     onClick = { viewModel.startMockExam() },
                     modifier = Modifier
@@ -752,11 +1029,112 @@ fun MockExamSetupScreen(viewModel: IkunViewModel) {
                         .height(50.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = KunerOrange),
-                    enabled = (viewModel.examTypeSingle || viewModel.examTypeMulti || viewModel.examTypeTf)
+                    enabled = (totalScheduled > 0)
                 ) {
                     Icon(Icons.Default.SportsBasketball, contentDescription = "", tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("开始模拟机考 (启动篮球排期)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun QuestionCountPicker(
+    title: String,
+    subtitle: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    icon: @Composable () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, KunerGrey.copy(alpha = 0.2f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                icon()
+                Column {
+                    Text(title, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text(subtitle, fontSize = 10.sp, color = Color.Gray)
+                }
+            }
+            
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                IconButton(
+                    onClick = {
+                        val current = value.toIntOrNull() ?: 0
+                        if (current > 0) {
+                            onValueChange((current - 1).toString())
+                        }
+                    },
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(KunerGrey.copy(alpha = 0.15f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Remove,
+                        contentDescription = "减少",
+                        tint = KunerCharcoal,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = { newVal ->
+                        if (newVal.isEmpty() || newVal.all { it.isDigit() }) {
+                            onValueChange(newVal)
+                        }
+                    },
+                    modifier = Modifier
+                        .width(54.dp)
+                        .height(42.dp),
+                    textStyle = LocalTextStyle.current.copy(
+                        textAlign = TextAlign.Center,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = KunerOrange,
+                        unfocusedBorderColor = KunerGrey.copy(alpha = 0.3f),
+                        focusedLabelColor = KunerOrange
+                    )
+                )
+
+                IconButton(
+                    onClick = {
+                        val current = value.toIntOrNull() ?: 0
+                        onValueChange((current + 1).toString())
+                    },
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(KunerOrangeLight, CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "增加",
+                        tint = KunerOrange,
+                        modifier = Modifier.size(14.dp)
+                    )
                 }
             }
         }

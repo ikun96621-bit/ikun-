@@ -90,10 +90,48 @@ class IkunViewModel(application: Application) : AndroidViewModel(application) {
             .apply()
     }
 
-    // --- Seeding ---
+    // --- Seeding & Daily Goal ---
+    var dailyGoalTarget by mutableStateOf(prefs.getInt("daily_goal_target", 10))
+        private set
+
+    var dailyCompletedCount by mutableStateOf(0)
+        private set
+
+    fun saveDailyGoalTarget(target: Int) {
+        dailyGoalTarget = target
+        prefs.edit().putInt("daily_goal_target", target).apply()
+    }
+
+    private fun getCurrentDateString(): String {
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+        return sdf.format(java.util.Date())
+    }
+
+    fun incrementDailyAnswers(byCount: Int = 1) {
+        val currentDateStr = getCurrentDateString()
+        val savedDate = prefs.getString("daily_completed_date", "") ?: ""
+        var currentCount = 0
+        if (savedDate == currentDateStr) {
+            currentCount = prefs.getInt("daily_completed_count", 0)
+        }
+        val newCount = currentCount + byCount
+        prefs.edit()
+            .putString("daily_completed_date", currentDateStr)
+            .putInt("daily_completed_count", newCount)
+            .apply()
+        dailyCompletedCount = newCount
+    }
+
     init {
         viewModelScope.launch {
             repository.seedIfNeeded()
+        }
+        val currentDateStr = getCurrentDateString()
+        val savedDate = prefs.getString("daily_completed_date", "") ?: ""
+        if (savedDate == currentDateStr) {
+            dailyCompletedCount = prefs.getInt("daily_completed_count", 0)
+        } else {
+            dailyCompletedCount = 0
         }
     }
 
@@ -119,6 +157,17 @@ class IkunViewModel(application: Application) : AndroidViewModel(application) {
                 resetQuestionState()
                 navigateTo(AppScreen.PRACTICE)
             }
+        }
+    }
+
+    fun startRandomPractice() {
+        viewModelScope.launch {
+            val allQs = repository.getAllQuestionsSync().shuffled()
+            selectedCategory = Category(-1, "随机全能刷题", "包含全部科目题库中的所有试题进行完全随机乱序练习。", "shuffle")
+            practiceQuestions = allQs
+            currentPracticeIndex = 0
+            resetQuestionState()
+            navigateTo(AppScreen.PRACTICE)
         }
     }
 
@@ -157,6 +206,7 @@ class IkunViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.saveProgress(currentQ.id, isCorrect, userAnswerString)
         }
+        incrementDailyAnswers(1)
     }
 
     fun nextPracticeQuestion() {
@@ -177,12 +227,23 @@ class IkunViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // --- MOCK EXAM STATE ---
-    // Customization variables
-    var examTimeMinutes by mutableStateOf(10) // 5, 10, 15, 30
-    var examQuestionCount by mutableStateOf(5)  // 5, 10, 15, 20
-    var examTypeSingle by mutableStateOf(true)
-    var examTypeMulti by mutableStateOf(true)
-    var examTypeTf by mutableStateOf(true)
+    // Customization variables and backups for dual-compatibility
+    var examTimeMinutesInput by mutableStateOf("10")
+    var examSingleCountInput by mutableStateOf("3")
+    var examMultiCountInput by mutableStateOf("2")
+    var examTfCountInput by mutableStateOf("2")
+
+    val examTimeMinutes: Int
+        get() = examTimeMinutesInput.toIntOrNull()?.coerceIn(1, 1440) ?: 10
+
+    val examSingleCount: Int
+        get() = examSingleCountInput.toIntOrNull()?.coerceAtLeast(0) ?: 0
+
+    val examMultiCount: Int
+        get() = examMultiCountInput.toIntOrNull()?.coerceAtLeast(0) ?: 0
+
+    val examTfCount: Int
+        get() = examTfCountInput.toIntOrNull()?.coerceAtLeast(0) ?: 0
 
     // Running exam variables
     var examQuestions by mutableStateOf<List<Question>>(emptyList())
@@ -203,27 +264,24 @@ class IkunViewModel(application: Application) : AndroidViewModel(application) {
     fun startMockExam() {
         viewModelScope.launch {
             val allQs = repository.getAllQuestionsSync()
-            // Filter by selected types
-            val allowedTypes = mutableListOf<String>()
-            if (examTypeSingle) allowedTypes.add("SINGLE")
-            if (examTypeMulti) allowedTypes.add("MULTI")
-            if (examTypeTf) allowedTypes.add("TF")
-
-            if (allowedTypes.isEmpty()) {
-                // If nothing is selected, allow all as default configuration
-                allowedTypes.addAll(listOf("SINGLE", "MULTI", "TF"))
-            }
-
-            val filteredQs = allQs.filter { allowedTypes.contains(it.type) }
             
-            // Randomize questions
-            val randomized = filteredQs.shuffled()
-            val finalCount = minOf(examQuestionCount, randomized.size)
+            val singleTarget = examSingleCount
+            val multiTarget = examMultiCount
+            val tfTarget = examTfCount
+            val durationMin = examTimeMinutes
+
+            // Select specified count for each type
+            val singleQs = allQs.filter { it.type == "SINGLE" }.shuffled().take(singleTarget)
+            val multiQs = allQs.filter { it.type == "MULTI" }.shuffled().take(multiTarget)
+            val tfQs = allQs.filter { it.type == "TF" }.shuffled().take(tfTarget)
+
+            val combined = (singleQs + multiQs + tfQs).shuffled()
+            val finalCount = combined.size
             
-            examQuestions = randomized.take(finalCount)
+            examQuestions = combined
             currentExamIndex = 0
             examUserAnswers = emptyMap()
-            examSecondsRemaining = examTimeMinutes * 60
+            examSecondsRemaining = durationMin * 60
             examTotalCount = finalCount
             
             if (finalCount > 0) {
@@ -232,7 +290,6 @@ class IkunViewModel(application: Application) : AndroidViewModel(application) {
                 startTimer()
             } else {
                 // No questions matched
-                // Fail-safe seed check or toast
             }
         }
     }
@@ -284,6 +341,7 @@ class IkunViewModel(application: Application) : AndroidViewModel(application) {
             }
             examCorrectCount = correctCount
             examScore = if (examTotalCount > 0) (correctCount * 100) / examTotalCount else 0
+            incrementDailyAnswers(examQuestions.size)
             navigateTo(AppScreen.MOCK_EXAM_RESULT)
         }
     }
@@ -338,6 +396,7 @@ class IkunViewModel(application: Application) : AndroidViewModel(application) {
             // Save progress. If correct, Repository will automatically delete it from wrong_questions!
             repository.saveProgress(currentQ.id, isCorrect, userAnswerString)
         }
+        incrementDailyAnswers(1)
     }
 
     fun nextRedoQuestion(wqList: List<Question>) {
