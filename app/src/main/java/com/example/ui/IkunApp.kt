@@ -1508,6 +1508,95 @@ fun SettingsScreen(viewModel: IkunViewModel) {
             Divider()
         }
 
+        // Section: Theme Mode Selection
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, KunerOrange.copy(alpha = 0.15f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Theme",
+                            tint = KunerOrange,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "🌓 应用主题设置 (明暗双色)",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "极致定制视觉体验。支持明亮（舒适健康）和暗黑（炫酷护眼）两种专属精心设计的配色主题，也可以选择跟随您的系统自动按需调换。",
+                        fontSize = 11.sp,
+                        color = Color.Gray,
+                        lineHeight = 15.sp,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val themeOptions = listOf(
+                            Triple("SYSTEM", "跟随系统", Icons.Default.Settings),
+                            Triple("LIGHT", "明（明亮）", Icons.Default.WbSunny),
+                            Triple("DARK", "暗（暗黑）", Icons.Default.NightsStay)
+                        )
+
+                        themeOptions.forEach { (mode, label, icon) ->
+                            val isSelected = viewModel.themeSetting == mode
+                            val bgSelectedColor = if (isSelected) KunerOrangeLight else MaterialTheme.colorScheme.surface
+                            val borderSelectedColor = if (isSelected) KunerOrange else KunerGrey.copy(alpha = 0.3f)
+                            val tintColor = if (isSelected) KunerOrange else Color.Gray
+                            val textStyleColor = if (isSelected) KunerOrange else MaterialTheme.colorScheme.onSurface
+
+                            Card(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { viewModel.saveThemeSetting(mode) },
+                                shape = RoundedCornerShape(10.dp),
+                                colors = CardDefaults.cardColors(containerColor = bgSelectedColor),
+                                border = BorderStroke(1.dp, borderSelectedColor)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = label,
+                                        tint = tintColor,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = label,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = textStyleColor,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Section 1: API Configuration Setup
         item {
             Card(

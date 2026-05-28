@@ -78,6 +78,18 @@ class IkunViewModel(application: Application) : AndroidViewModel(application) {
             .apply()
     }
 
+    // --- Application Theme Management ---
+    // Supported modes: "SYSTEM", "LIGHT", "DARK"
+    var themeSetting by mutableStateOf(prefs.getString("theme_mode", "SYSTEM") ?: "SYSTEM")
+        private set
+
+    fun saveThemeSetting(mode: String) {
+        themeSetting = mode
+        prefs.edit()
+            .putString("theme_mode", mode)
+            .apply()
+    }
+
     // --- Seeding ---
     init {
         viewModelScope.launch {
