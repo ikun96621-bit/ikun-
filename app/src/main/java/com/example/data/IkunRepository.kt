@@ -15,11 +15,11 @@ class IkunRepository(private val context: Context) {
      * Seeds initial questions and categories if the data isn't there already.
      */
     suspend fun seedIfNeeded() {
+        IkunSeedData.categories.forEach {
+            dao.insertCategory(it)
+        }
         val allQuestions = dao.getAllQuestionsSync()
         if (allQuestions.isEmpty()) {
-            IkunSeedData.categories.forEach {
-                dao.insertCategory(it)
-            }
             IkunSeedData.questions.forEach {
                 dao.insertQuestion(it)
             }

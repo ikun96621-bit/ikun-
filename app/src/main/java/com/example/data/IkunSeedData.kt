@@ -4,21 +4,21 @@ object IkunSeedData {
     val categories = listOf(
         Category(
             id = 1,
-            name = "Kuner 巅峰对决 (明星圈常识)",
-            description = "这里是关于练习生文化、运动竞技以及经典的唱跳、Rap和篮球趣味知识竞答！",
+            name = "篮球1V1",
+            description = "这里是关于篮球、运动竞技以及练习生的经典趣味内容与常识盘点！",
             iconName = "sports_basketball"
         ),
         Category(
             id = 2,
-            name = "计算机与移动开发技术",
-            description = "挑战你对 Kotlin 编程语言、Android 现代架构（Room、Compose、Flow）的理解！",
-            iconName = "code"
+            name = "多人唱跳",
+            description = "多人及纯享舞台上的高能展示，考验你对唱跳名场面、细节知识的熟悉度！",
+            iconName = "music_note"
         ),
         Category(
             id = 3,
-            name = "人工智能与大语言模型",
-            description = "测评最前沿的 AI 底层架构 Transformer、Prompt Engineering 以及 Gemini 大模型认知！",
-            iconName = "psychology"
+            name = "rap对错",
+            description = "硬核说唱热词、节奏押韵全解析，真金不怕红炉火，快来测测你是不是说唱大师！",
+            iconName = "mic"
         )
     )
 

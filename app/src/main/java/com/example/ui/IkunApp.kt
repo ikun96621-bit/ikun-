@@ -3,6 +3,7 @@ package com.example.ui
 import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -292,22 +293,24 @@ fun DashboardScreen(viewModel: IkunViewModel) {
                             )
                         }
                         
-                        // Small inline target adjuster
+                        // Small inline target adjuster with modern rounded corners
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            IconButton(
-                                onClick = { 
-                                    if (dailyTarget > 5) {
-                                        viewModel.saveDailyGoalTarget(dailyTarget - 5)
-                                    } else if (dailyTarget > 1) {
-                                        viewModel.saveDailyGoalTarget(dailyTarget - 1)
-                                    }
-                                },
+                            Box(
                                 modifier = Modifier
-                                    .size(30.dp)
-                                    .background(KunerGrey.copy(alpha = 0.15f), CircleShape)
+                                    .size(32.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(KunerGrey.copy(alpha = 0.15f))
+                                    .clickable { 
+                                        if (dailyTarget > 5) {
+                                            viewModel.saveDailyGoalTarget(dailyTarget - 5)
+                                        } else if (dailyTarget > 1) {
+                                            viewModel.saveDailyGoalTarget(dailyTarget - 1)
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Remove,
@@ -322,16 +325,19 @@ fun DashboardScreen(viewModel: IkunViewModel) {
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 color = KunerOrange,
-                                modifier = Modifier.padding(horizontal = 4.dp)
+                                modifier = Modifier.padding(horizontal = 6.dp)
                             )
                             
-                            IconButton(
-                                onClick = { 
-                                    viewModel.saveDailyGoalTarget(dailyTarget + 5)
-                                },
+                            Box(
                                 modifier = Modifier
-                                    .size(30.dp)
-                                    .background(KunerOrangeLight, CircleShape)
+                                    .size(32.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(KunerOrangeLight)
+                                    .border(1.dp, KunerOrange.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                                    .clickable { 
+                                        viewModel.saveDailyGoalTarget(dailyTarget + 5)
+                                    },
+                                contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Add,
@@ -487,6 +493,8 @@ fun DashboardScreen(viewModel: IkunViewModel) {
                         Icon(
                             imageVector = when (category.iconName) {
                                 "sports_basketball" -> Icons.Default.SportsBasketball
+                                "music_note" -> Icons.Default.MusicNote
+                                "mic" -> Icons.Default.Mic
                                 "code" -> Icons.Default.Code
                                 "shuffle" -> Icons.Default.Shuffle
                                 else -> Icons.Default.Psychology
@@ -1075,24 +1083,26 @@ fun QuestionCountPicker(
             
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                IconButton(
-                    onClick = {
-                        val current = value.toIntOrNull() ?: 0
-                        if (current > 0) {
-                            onValueChange((current - 1).toString())
-                        }
-                    },
+                Box(
                     modifier = Modifier
-                        .size(32.dp)
-                        .background(KunerGrey.copy(alpha = 0.15f), CircleShape)
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(KunerGrey.copy(alpha = 0.15f))
+                        .clickable {
+                            val current = value.toIntOrNull() ?: 0
+                            if (current > 0) {
+                                onValueChange((current - 1).toString())
+                            }
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Remove,
                         contentDescription = "减少",
                         tint = KunerCharcoal,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
 
@@ -1105,7 +1115,7 @@ fun QuestionCountPicker(
                     },
                     modifier = Modifier
                         .width(54.dp)
-                        .height(42.dp),
+                        .height(40.dp),
                     textStyle = LocalTextStyle.current.copy(
                         textAlign = TextAlign.Center,
                         fontSize = 13.sp,
@@ -1120,20 +1130,23 @@ fun QuestionCountPicker(
                     )
                 )
 
-                IconButton(
-                    onClick = {
-                        val current = value.toIntOrNull() ?: 0
-                        onValueChange((current + 1).toString())
-                    },
+                Box(
                     modifier = Modifier
-                        .size(32.dp)
-                        .background(KunerOrangeLight, CircleShape)
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(KunerOrangeLight)
+                        .border(1.dp, KunerOrange.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+                        .clickable {
+                            val current = value.toIntOrNull() ?: 0
+                            onValueChange((current + 1).toString())
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "增加",
                         tint = KunerOrange,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
