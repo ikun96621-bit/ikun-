@@ -20,7 +20,8 @@ class IkunRepository(private val context: Context) {
         }
         val allQuestions = dao.getAllQuestionsSync()
         if (allQuestions.isEmpty()) {
-            IkunSeedData.questions.forEach {
+            val questions = IkunSeedData.loadQuestionsFromAssets(context)
+            questions.forEach {
                 dao.insertQuestion(it)
             }
         }
